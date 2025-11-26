@@ -1,0 +1,13 @@
+[
+  "tests/test_retopology.py::TestMeshIO::test_get_mesh_info",
+  "tests/test_retopology.py::TestMeshIO::test_load_and_save",
+  "tests/test_retopology.py::TestMeshPreprocessor::test_analyze",
+  "tests/test_retopology.py::TestMeshPreprocessor::test_preprocess_basic",
+  "tests/test_retopology.py::TestQualityMetrics::test_quad_ratio_calculation",
+  "tests/test_retopology.py::TestQualityMetrics::test_quality_report_generation",
+  "tests/test_retopology.py::TestRetopologyProcessor::test_basic_retopology",
+  "tests/test_retopology.py::TestRetopologyProcessor::test_retopology_with_config",
+  "tests/test_retopology.py::TestPipeline::test_full_pipeline",
+  "tests/test_retopology.py::TestEdgeCases::test_empty_config",
+  "tests/test_retopology.py::TestEdgeCases::test_file_not_found"
+]

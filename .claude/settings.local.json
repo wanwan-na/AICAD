@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(tree /F /L 3 2)",
+      "Bash(nul)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(pip install:*)",
+      "Bash(python tests/test_retopology.py:*)",
+      "Bash(python:*)",
+      "Bash(pip search:*)",
+      "Bash(pip index:*)",
+      "WebSearch",
+      "Bash(.venvScriptspython.exe -c \"from src.preprocessor import HunyuanPreprocessor, repair_mesh_aggressive, analyze_mesh_topology; print(''导入成功'')\")",
+      "Bash(D:/Downloads/Hunyuan3D-2.1-main/Hunyuan3D-2.1-main/AI_CAD/.venv/Scripts/python.exe:*)",
+      "Bash(D:/Downloads/Hunyuan3D-2.1-main/Hunyuan3D-2.1-main/AI_CAD/.venv/Scripts/pip.exe install:*)",
+      "Bash(D:/Downloads/Hunyuan3D-2.1-main/Hunyuan3D-2.1-main/AI_CAD/.venv/Scripts/pip.exe list:*)",
+      "WebFetch(domain:hexagon.com)",
+      "WebFetch(domain:www.goengineer.com)",
+      "WebFetch(domain:www.artec3d.com)",
+      "Bash(where:*)",
+      "Bash(cmd /c \"dir \"\"C:\\Program Files\\Blender Foundation\"\" 2>nul || echo NOT_FOUND\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
