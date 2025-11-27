@@ -2,20 +2,66 @@
 AI_CAD 处理流程主程序
 
 使用方法:
-    python run_pipeline.py input.glb
-    python run_pipeline.py input.glb --output output.obj
-    python run_pipeline.py input.glb --method blender --target-faces 5000
+    python run_pipeline.py model.glb                # 从 inputs/ 读取，输出到 outputs/
+    python run_pipeline.py model.glb -m blender     # 使用 Blender 方法
+    python run_pipeline.py model.glb -t 5000        # 指定目标面数
+    python run_pipeline.py --list                   # 列出 inputs/ 中的文件
 """
 
 import argparse
 import sys
 from pathlib import Path
+from datetime import datetime
+
+
+# 项目根目录
+PROJECT_ROOT = Path(__file__).parent
+INPUTS_DIR = PROJECT_ROOT / "inputs"
+OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+
+
+def get_next_output_folder(base_name: str) -> Path:
+    """生成新的输出文件夹，格式: outputs/{文件名}_{序号}_{时间戳}/"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # 查找已有的文件夹数量
+    existing = list(OUTPUTS_DIR.glob(f"{base_name}_*"))
+    next_num = len(existing) + 1
+
+    folder_name = f"{base_name}_{next_num:03d}_{timestamp}"
+    output_folder = OUTPUTS_DIR / folder_name
+    output_folder.mkdir(parents=True, exist_ok=True)
+
+    return output_folder
+
+
+def list_input_files():
+    """列出 inputs 文件夹中的可用文件"""
+    if not INPUTS_DIR.exists():
+        print(f"inputs 文件夹不存在: {INPUTS_DIR}")
+        return []
+
+    extensions = ['.glb', '.gltf', '.obj', '.stl', '.ply']
+    files = []
+    for ext in extensions:
+        files.extend(INPUTS_DIR.glob(f"*{ext}"))
+
+    return sorted(files)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='混元3D模型 → 四边面网格转换')
-    parser.add_argument('input', help='输入文件路径 (.glb, .obj, .stl, .ply)')
-    parser.add_argument('--output', '-o', help='输出文件路径（默认自动生成）')
+    parser = argparse.ArgumentParser(
+        description='混元3D模型 → 四边面网格转换',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+    python run_pipeline.py model.glb              # 处理 inputs/model.glb
+    python run_pipeline.py model.glb -m blender   # 使用 Blender 方法
+    python run_pipeline.py --list                 # 列出可用文件
+        """
+    )
+    parser.add_argument('input', nargs='?', help='输入文件名（从 inputs/ 文件夹读取）')
+    parser.add_argument('--list', '-l', action='store_true', help='列出 inputs/ 中的可用文件')
     parser.add_argument('--method', '-m', choices=['blender', 'builtin'],
                         default='builtin', help='四边面转换方法: blender(推荐) 或 builtin')
     parser.add_argument('--target-faces', '-t', type=int, default=5000,
@@ -26,25 +72,47 @@ def main():
 
     args = parser.parse_args()
 
-    input_path = Path(args.input)
-    if not input_path.exists():
-        print(f"错误: 输入文件不存在: {input_path}")
+    # 列出文件模式
+    if args.list:
+        files = list_input_files()
+        if files:
+            print(f"\ninputs/ 文件夹中的可用文件 ({len(files)} 个):\n")
+            for i, f in enumerate(files, 1):
+                size_kb = f.stat().st_size / 1024
+                print(f"  {i}. {f.name} ({size_kb:.1f} KB)")
+            print(f"\n使用方法: python run_pipeline.py <文件名>")
+        else:
+            print("inputs/ 文件夹中没有找到支持的文件")
+        sys.exit(0)
+
+    # 检查输入参数
+    if not args.input:
+        parser.print_help()
+        print("\n提示: 使用 --list 查看可用文件")
         sys.exit(1)
 
-    # 确定输出路径
-    if args.output:
-        output_path = Path(args.output)
-    else:
-        # 默认输出与输入相同格式，如果是glb/gltf则保持，否则用obj
-        if input_path.suffix.lower() in ['.glb', '.gltf']:
-            output_path = input_path.parent / f"{input_path.stem}_quad.glb"
-        else:
-            output_path = input_path.parent / f"{input_path.stem}_quad.obj"
+    # 确定输入路径（从 inputs/ 文件夹读取）
+    input_path = Path(args.input)
+    if not input_path.is_absolute():
+        # 如果是相对路径，从 inputs/ 文件夹查找
+        input_path = INPUTS_DIR / args.input
+
+    if not input_path.exists():
+        print(f"错误: 输入文件不存在: {input_path}")
+        print(f"\n提示: 请将文件放入 inputs/ 文件夹，或使用 --list 查看可用文件")
+        sys.exit(1)
+
+    # 创建新的输出文件夹
+    output_folder = get_next_output_folder(input_path.stem)
+
+    # 确定输出文件路径
+    output_path = output_folder / f"{input_path.stem}_quad.obj"
 
     print("=" * 50)
     print("AI_CAD 处理流程")
     print("=" * 50)
     print(f"输入文件: {input_path}")
+    print(f"输出文件夹: {output_folder}")
     print(f"输出文件: {output_path}")
     print(f"转换方法: {args.method}")
     print(f"目标面数: {args.target_faces}")
@@ -59,7 +127,7 @@ def main():
             from src.preprocessor import HunyuanPreprocessor
 
             preprocessor = HunyuanPreprocessor()
-            cleaned_path = input_path.parent / f"{input_path.stem}_cleaned.obj"
+            cleaned_path = output_folder / f"{input_path.stem}_cleaned.obj"
 
             result = preprocessor.process(current_file, str(cleaned_path))
 
@@ -151,6 +219,7 @@ def main():
     # ===== 完成 =====
     print("\n" + "=" * 50)
     print("处理完成!")
+    print(f"输出文件夹: {output_folder}")
     print(f"输出文件: {output_path}")
     print("=" * 50)
 
